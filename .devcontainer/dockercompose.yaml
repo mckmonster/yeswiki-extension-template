@@ -1,0 +1,50 @@
+volumes:
+  yeswiki-db:
+    name: yeswiki-db
+    driver: local
+
+networks:
+  yeswiki:
+
+services:
+  yeswiki:
+    build:
+      dockerfile: dockerfile
+      args:
+        MY_PROJECTNAME: ${MY_PROJECTNAME}
+        YesWikiVersion: ${YesWikiVersion}
+    volumes:
+      - ../..:/workspaces
+    depends_on:
+      - yeswiki-db
+    networks:
+      - yeswiki
+      
+  yeswiki-db:
+      image: mysql:latest
+      container_name: yeswiki-db
+      volumes:
+        - yeswiki-db:/var/lib/mysql
+      env_file: ./yeswiki.secrets
+      networks:
+        - yeswiki
+  
+  myadmin:
+    image: phpmyadmin:latest
+    container_name: myadmin
+    env_file: ./yeswiki.secrets
+    environment:
+      PMA_HOST: yeswiki-db
+      PMA_PORT: 3306
+    ports:
+      - "8086:80"
+    networks:
+      - yeswiki
+
+  mail:
+    image: maildev/maildev
+    container_name: mail
+    ports:
+      - "1080:1080"
+    networks:
+      - yeswiki
